@@ -16,7 +16,7 @@
 #include <vector>
 
 #define UART_PORT "/dev/ttyAMA0"
-#define TIMEOUT 200
+#define TIMEOUT 2
 
 int uart_init()
 {
@@ -121,30 +121,21 @@ int main()
     if (fd == -1)
         return EXIT_FAILURE;
 
-    std::thread(
-        [&]()
+    while (1)
+    {
+        SendControllFrame(fd);
+
+        uint8_t buffer[256];
+        int bytes_read = uart_receive(fd, buffer, sizeof(buffer));
+        if (bytes_read > 0)
         {
-            while (!isBindResponseReceive)
-            {
-                SendControllFrame(fd);
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            }
-        })
-        .detach();
-
-    uint8_t buffer[256];
-    int bytes_read = uart_receive(fd, buffer, sizeof(buffer));
-    if (bytes_read > 0)
-    {
-        std::cout << "Получен ответ: " << bytesToHex(buffer, bytes_read) << std::endl;
+            std::cout << "Получен ответ: " << bytesToHex(buffer, bytes_read) << std::endl;
+        }
+        else
+        {
+            std::cout << "Ответ не получен в течение " << TIMEOUT << " секунд." << std::endl;
+        }
     }
-    else
-    {
-        std::cout << "Ответ не получен в течение " << TIMEOUT << " секунд." << std::endl;
-    }
-
-    isBindResponseReceive = true;
 
     close(fd); // Закрываем UART
     return EXIT_SUCCESS;
