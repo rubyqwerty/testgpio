@@ -92,7 +92,7 @@ void send_bind_request(int fd)
     delete[] frame;
 }
 
-std::atomic<bool> isBindResponseReceive = false;
+
 
 int main()
 {
